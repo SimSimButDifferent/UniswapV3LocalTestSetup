@@ -1,57 +1,9 @@
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
-const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
-const tokenArtifacts = require("../mainnetTokens.json");
-
 const artifacts = {
   UniswapV3Factory: require("@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json"),
   UniswapV3Router: require("@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json"),
   UniswapV3Pool: require("@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json"),
   WETH9: require("@uniswap/hardhat-v3-deploy/src/util/WETH9.json"),
 };
-
-describe("SimpleSwap", function () {
-  let Weth,
-    weth,
-    feeTier,
-    usdtAmount,
-    wethAmount,
-    uniswapV3Factory,
-    UniswapV3Factory,
-    uniswapV3Router,
-    UniswapV3Router,
-    uniswapV3Pool,
-    UniswapV3Pool;
-
-  beforeEach(async function () {
-    const [deployer, addr1] = await ethers.getSigners();
-
-    feeTier = 3000;
-
-    usdtAmount = ethers.utils.parseUnits("1000000", 18);
-
-    wethAmount = ethers.utils.parseUnits("1000", 18);
-
-    // Deploy WETH Contract
-    weth = await deployWeth();
-
-    // Deploy Uinswap V3 Factory Contract
-    uniswapV3Factory = await deployUniswapV3Factory();
-
-    // Deploy Uniswap V3 Router Contract
-    uniswapV3Router = await deployUniswapV3Router(
-      uniswapV3Factory.address,
-      weth.address
-    );
-  });
-
-  describe("Test contract deployment and setup", function () {
-    it("Should Succesfully mint weth", async function () {
-      console.log(weth.address);
-    });
-  });
-});
 
 async function deployWeth() {
   const [deployer] = await ethers.getSigners();
@@ -106,3 +58,5 @@ async function deployUniswapV3Router(uniswapV3Factory, weth) {
 
   return uniswapV3Router;
 }
+
+module.exports = { deployUniswapV3Router, deployUniswapV3Factory, deployWeth };
