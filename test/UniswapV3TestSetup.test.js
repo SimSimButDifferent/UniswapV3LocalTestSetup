@@ -19,7 +19,10 @@ describe("UniswapV3TestSetup", function () {
     wethAmount,
     uniswapV3Factory,
     uniswapV3Router,
-    uniswapV3Pool;
+    uniswapV3Pool,
+    txReceipt,
+    gasUsed,
+    gasCost;
 
   beforeEach(async function () {
     [deployer, addr1] = await ethers.getSigners();
@@ -53,7 +56,7 @@ describe("UniswapV3TestSetup", function () {
 
   describe("Test contract deployment and setup", function () {
     it("Should Succesfully mint weth", async function () {
-      // Check eth balance of deployer
+      // Check eth balance of addr1
       const ethBalanceBeforeTx = await addr1.getBalance();
 
       console.log(
@@ -67,24 +70,45 @@ describe("UniswapV3TestSetup", function () {
         value: wethAmount,
       });
 
-      const txReceipt = sendEthTx.wait();
+      // Calculate gas Cost
 
-      // const gasCost = txReceipt.gasUsed * sendEthTx.gasPrice;
+      txReceipt = await sendEthTx.wait();
 
-      // console.log(
-      //   "Gas cost of minting WETH: ",
-      //   ethers.utils.formatEther(gasCost.toString())
-      // );
+      gasUsed = txReceipt.gasUsed;
 
+      gasPrice = sendEthTx.gasPrice;
+
+      const gasCostBigInt = BigInt(gasUsed.mul(gasPrice));
+
+      console.log(
+        "Gas cost of minting WETH: ",
+        ethers.utils.formatEther(gasCost.toString())
+      );
+
+      // Check eth balance of addr1 after Tx
       const ethBalanceAfterTx = await addr1.getBalance();
 
-      // expect(ethBalanceAfterTx).to.equal(
-      //   ethBalanceBeforeTx.sub(ethAmount + gasCost)
-      // );
+      // Convert to BigInt
+      const ethBalanceBeforeTxBigInt = BigInt(ethBalanceBeforeTx);
+      const ethAmountBigInt = BigInt(ethAmount);
+
+      // Check Eth balance of addr1 after Tx
+      expect(ethBalanceAfterTx).to.equal(
+        ethBalanceBeforeTxBigInt - (ethAmountBigInt + gasCostBigInt)
+      );
 
       console.log(
         "ETH balance of addr1 after Tx: ",
         ethers.utils.formatEther(ethBalanceAfterTx.toString())
+      );
+
+      // get Weth balance for addr1
+      const wethBalance = await weth.balanceOf(addr1.address);
+
+      expect(wethBalance).to.equal(wethAmount);
+
+      console.log(
+        `WETH balance of addr1: ${ethers.utils.formatEther(wethBalance)}`
       );
     });
   });
