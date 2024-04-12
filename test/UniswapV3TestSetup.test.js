@@ -7,12 +7,14 @@ const {
   deployWeth,
   deployUniswapV3Factory,
   deployUniswapV3Router,
+  deployUsdt,
 } = require("../utils/deployV3Contracts");
 
 describe("UniswapV3TestSetup", function () {
   let deployer,
     addr1,
     weth,
+    usdt,
     feeTier,
     ethAmount,
     usdtAmount,
@@ -50,6 +52,10 @@ describe("UniswapV3TestSetup", function () {
       weth.address
     );
 
+    // Deploy USDT Contract - NOT WORKING
+
+    usdt = await deployUsdt();
+
     console.log("Contracts Deployed!");
     console.log("---------------------------------");
   });
@@ -82,7 +88,7 @@ describe("UniswapV3TestSetup", function () {
 
       console.log(
         "Gas cost of minting WETH: ",
-        ethers.utils.formatEther(gasCost.toString())
+        ethers.utils.formatEther(gasCostBigInt.toString())
       );
 
       // Check eth balance of addr1 after Tx
@@ -109,6 +115,57 @@ describe("UniswapV3TestSetup", function () {
 
       console.log(
         `WETH balance of addr1: ${ethers.utils.formatEther(wethBalance)}`
+      );
+    });
+
+    it("Should successfully fund addr 1 with Usdt", async function () {
+      // Get USDT contract
+      // const usdt = await ethers.getContractAt(
+      //   tokenArtifacts["USDT"].abi,
+      //   tokenArtifacts["USDT"].address
+      // );
+
+      // Check USDT balance of addr1
+      const usdtBalanceBeforeTx = await usdt.balanceOf(addr1.address);
+
+      console.log(
+        "USDT balance of addr1 before Tx: ",
+        ethers.utils.formatUnits(usdtBalanceBeforeTx.toString(), 18)
+      );
+
+      // Transfer USDT to addr1
+      const transferUsdtTx = await usdt.mint(addr1.address, usdtAmount);
+
+      // Calculate gas Cost
+
+      txReceipt = await transferUsdtTx.wait();
+
+      gasUsed = txReceipt.gasUsed;
+
+      gasPrice = transferUsdtTx.gasPrice;
+
+      const gasCostBigInt = BigInt(gasUsed.mul(gasPrice));
+
+      console.log(
+        "Gas cost of funding addr1 with USDT: ",
+        ethers.utils.formatEther(gasCostBigInt.toString())
+      );
+
+      // Check USDT balance of addr1 after Tx
+      const usdtBalanceAfterTx = await usdt.balanceOf(addr1.address);
+
+      // Convert to BigInt
+      const usdtBalanceBeforeTxBigInt = BigInt(usdtBalanceBeforeTx);
+      const usdtAmountBigInt = BigInt(usdtAmount);
+
+      // Check USDT balance of addr1 after Tx
+      expect(usdtBalanceAfterTx).to.equal(
+        usdtBalanceBeforeTxBigInt + usdtAmountBigInt
+      );
+
+      console.log(
+        "USDT balance of addr1 after Tx: ",
+        ethers.utils.formatUnits(usdtBalanceAfterTx.toString(), 18)
       );
     });
   });

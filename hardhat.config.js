@@ -9,6 +9,7 @@ module.exports = {
       forking: {
         url: "https://eth-mainnet.g.alchemy.com/v2/VuIQG_PWKLrGJ3At5UsTBFVSaq97E41r",
         blockNumber: 19586495,
+        gasLimit: 12000000,
       },
     },
   },

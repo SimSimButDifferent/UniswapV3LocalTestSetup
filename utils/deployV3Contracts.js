@@ -5,6 +5,8 @@ const artifacts = {
   WETH9: require("@uniswap/hardhat-v3-deploy/src/util/WETH9.json"),
 };
 
+const ERC20 = require("../mainnetTokens.json");
+
 async function deployWeth() {
   const [deployer] = await ethers.getSigners();
 
@@ -59,4 +61,24 @@ async function deployUniswapV3Router(uniswapV3Factory, weth) {
   return uniswapV3Router;
 }
 
-module.exports = { deployUniswapV3Router, deployUniswapV3Factory, deployWeth };
+// NOT WORKING
+async function deployUsdt() {
+  const [deployer] = await ethers.getSigners();
+
+  const Usdt = await hre.ethers.getContractFactory("USDT", deployer);
+
+  const usdt = await Usdt.deploy();
+
+  await usdt.deployed();
+
+  console.log(`USDT deployed to ${usdt.address}`);
+
+  return usdt;
+}
+
+module.exports = {
+  deployUniswapV3Router,
+  deployUniswapV3Factory,
+  deployWeth,
+  deployUsdt,
+};
