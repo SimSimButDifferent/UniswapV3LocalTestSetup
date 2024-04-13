@@ -7,6 +7,7 @@ const {
   deployWeth,
   deployUniswapV3Factory,
   deployUniswapV3Router,
+  deployUniswapV3Pool,
   deployUsdt,
 } = require("../utils/deployV3Contracts");
 
