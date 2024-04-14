@@ -2,12 +2,10 @@ require("@nomicfoundation/hardhat-network-helpers");
 require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
-const tokenArtifacts = require("../mainnetTokens.json");
 const {
   deployWeth,
   deployUniswapV3Factory,
   deployUniswapV3Router,
-  deployUniswapV3Pool,
   deployUsdt,
 } = require("../utils/deployV3Contracts");
 
@@ -22,7 +20,8 @@ describe("UniswapV3TestSetup", function () {
     wethAmount,
     uniswapV3Factory,
     uniswapV3Router,
-    uniswapV3Pool,
+    usdtWethPool,
+    usdtWethPoolAddress,
     txReceipt,
     gasUsed,
     gasCost;
@@ -53,9 +52,28 @@ describe("UniswapV3TestSetup", function () {
       weth.address
     );
 
-    // Deploy USDT Contract - NOT WORKING
+    // Deploy USDT Contract
 
     usdt = await deployUsdt();
+
+    // Deploy usdt/weth pool
+
+    usdtWethPool = await uniswapV3Factory.createPool(
+      usdt.address,
+      weth.address,
+      feeTier
+    );
+
+    await usdtWethPool.wait();
+
+    usdtWethPoolAddress = await uniswapV3Factory.getPool(
+      usdt.address,
+      weth.address,
+      feeTier
+    );
+
+    console.log("Creating USDT/WETH Pool...");
+    console.log(`USDT/WETH Pool created at address: ${usdtWethPoolAddress}`);
 
     console.log("Contracts Deployed!");
     console.log("---------------------------------");
@@ -120,12 +138,6 @@ describe("UniswapV3TestSetup", function () {
     });
 
     it("Should successfully fund addr 1 with Usdt", async function () {
-      // Get USDT contract
-      // const usdt = await ethers.getContractAt(
-      //   tokenArtifacts["USDT"].abi,
-      //   tokenArtifacts["USDT"].address
-      // );
-
       // Check USDT balance of addr1
       const usdtBalanceBeforeTx = await usdt.balanceOf(addr1.address);
 
@@ -168,6 +180,16 @@ describe("UniswapV3TestSetup", function () {
         "USDT balance of addr1 after Tx: ",
         ethers.utils.formatUnits(usdtBalanceAfterTx.toString(), 18)
       );
+    });
+    it("Should successfully create a pool for USDT/WETH", async function () {
+      // Check if pool exists
+      const poolExists = await uniswapV3Factory.getPool(
+        usdt.address,
+        weth.address,
+        feeTier
+      );
+
+      expect(poolExists).to.equal(usdtWethPoolAddress);
     });
   });
 });

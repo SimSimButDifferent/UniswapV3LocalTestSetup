@@ -75,24 +75,6 @@ async function deployUsdt() {
   return usdt;
 }
 
-async function deployUniswapV3Pool(token0, token1, fee) {
-  const [deployer] = await ethers.getSigners();
-
-  const UniswapV3Pool = new hre.ethers.ContractFactory(
-    artifacts.UniswapV3Pool.abi,
-    artifacts.UniswapV3Pool.bytecode,
-    deployer
-  );
-
-  const uniswapV3Pool = await UniswapV3Pool.deploy(token0, token1, fee);
-
-  await uniswapV3Pool.deployed();
-
-  console.log(`Uniswap V3 Pool deployed to ${uniswapV3Pool.address}`);
-
-  return uniswapV3Pool;
-}
-
 module.exports = {
   deployUniswapV3Router,
   deployUniswapV3Factory,
