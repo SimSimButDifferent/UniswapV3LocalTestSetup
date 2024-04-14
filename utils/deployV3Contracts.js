@@ -5,8 +5,6 @@ const artifacts = {
   WETH9: require("@uniswap/hardhat-v3-deploy/src/util/WETH9.json"),
 };
 
-const ERC20 = require("../mainnetTokens.json");
-
 async function deployWeth() {
   const [deployer] = await ethers.getSigners();
 
@@ -78,7 +76,6 @@ async function deployUsdt() {
 module.exports = {
   deployUniswapV3Router,
   deployUniswapV3Factory,
-  deployUniswapV3Pool,
   deployWeth,
   deployUsdt,
 };

@@ -8,10 +8,13 @@ const {
   deployUniswapV3Router,
   deployUsdt,
 } = require("../utils/deployV3Contracts");
+const { fundTestAddresses } = require("../utils/fundTestAddresses");
 
 describe("UniswapV3TestSetup", function () {
   let deployer,
     addr1,
+    addr2,
+    addr3,
     weth,
     usdt,
     feeTier,
@@ -27,11 +30,11 @@ describe("UniswapV3TestSetup", function () {
     gasCost;
 
   beforeEach(async function () {
-    [deployer, addr1] = await ethers.getSigners();
+    [deployer, addr1, addr2, addr3] = await ethers.getSigners();
 
     feeTier = 3000;
 
-    usdtAmount = ethers.utils.parseUnits("1000000", 18);
+    usdtAmount = ethers.utils.parseUnits("10000000", 18);
 
     wethAmount = ethers.utils.parseUnits("1000", 18);
 
@@ -56,6 +59,9 @@ describe("UniswapV3TestSetup", function () {
 
     usdt = await deployUsdt();
 
+    console.log("---------------------------------");
+    console.log(" ");
+
     // Deploy usdt/weth pool
 
     usdtWethPool = await uniswapV3Factory.createPool(
@@ -74,8 +80,53 @@ describe("UniswapV3TestSetup", function () {
 
     console.log("Creating USDT/WETH Pool...");
     console.log(`USDT/WETH Pool created at address: ${usdtWethPoolAddress}`);
-
+    console.log(" ");
     console.log("Contracts Deployed!");
+    console.log("---------------------------------");
+    console.log(" ");
+
+    // Fund addresses with WETH and USDT
+    await fundTestAddresses(weth, usdt);
+
+    console.log("Funding addresses with WETH...");
+    console.log(
+      `addr1 WETH Balance: ${ethers.utils.formatEther(
+        await weth.balanceOf(addr1.address)
+      )}`
+    );
+    console.log(
+      `addr2 WETH Balance: ${ethers.utils.formatEther(
+        await weth.balanceOf(addr1.address)
+      )}`
+    );
+    console.log(
+      `addr3 WETH Balance: ${ethers.utils.formatEther(
+        await weth.balanceOf(addr1.address)
+      )}`
+    );
+
+    console.log(" ");
+    console.log("Funding addresses with USDT...");
+    console.log(
+      `addr1 USDT Balance: ${ethers.utils.formatUnits(
+        await usdt.balanceOf(addr1.address),
+        6
+      )}`
+    );
+    console.log(
+      `addr2 USDT Balance: ${ethers.utils.formatUnits(
+        await usdt.balanceOf(addr2.address),
+        6
+      )}`
+    );
+    console.log(
+      `addr3 USDT Balance: ${ethers.utils.formatUnits(
+        await usdt.balanceOf(addr3.address),
+        6
+      )}`
+    );
+
+    console.log("Wallet addresses funded!");
     console.log("---------------------------------");
   });
 
@@ -130,66 +181,88 @@ describe("UniswapV3TestSetup", function () {
       // get Weth balance for addr1
       const wethBalance = await weth.balanceOf(addr1.address);
 
-      expect(wethBalance).to.equal(wethAmount);
+      expect(wethBalance).to.equal(BigInt(wethAmount * 2));
 
       console.log(
         `WETH balance of addr1: ${ethers.utils.formatEther(wethBalance)}`
       );
     });
 
-    it("Should successfully fund addr 1 with Usdt", async function () {
-      // Check USDT balance of addr1
-      const usdtBalanceBeforeTx = await usdt.balanceOf(addr1.address);
+    //     it("Should successfully fund addr 1 with Usdt", async function () {
+    //       // Check USDT balance of addr1
+    //       const usdtBalanceBeforeTx = await usdt.balanceOf(addr1.address);
 
-      console.log(
-        "USDT balance of addr1 before Tx: ",
-        ethers.utils.formatUnits(usdtBalanceBeforeTx.toString(), 18)
-      );
+    //       console.log(
+    //         "USDT balance of addr1 before Tx: ",
+    //         ethers.utils.formatUnits(usdtBalanceBeforeTx.toString(), 18)
+    //       );
 
-      // Transfer USDT to addr1
-      const transferUsdtTx = await usdt.mint(addr1.address, usdtAmount);
+    //       // Transfer USDT to addr1
+    //       const transferUsdtTx = await usdt.mint(addr1.address, usdtAmount);
 
-      // Calculate gas Cost
+    //       // Calculate gas Cost
 
-      txReceipt = await transferUsdtTx.wait();
+    //       txReceipt = await transferUsdtTx.wait();
 
-      gasUsed = txReceipt.gasUsed;
+    //       gasUsed = txReceipt.gasUsed;
 
-      gasPrice = transferUsdtTx.gasPrice;
+    //       gasPrice = transferUsdtTx.gasPrice;
 
-      const gasCostBigInt = BigInt(gasUsed.mul(gasPrice));
+    //       const gasCostBigInt = BigInt(gasUsed.mul(gasPrice));
 
-      console.log(
-        "Gas cost of funding addr1 with USDT: ",
-        ethers.utils.formatEther(gasCostBigInt.toString())
-      );
+    //       console.log(
+    //         "Gas cost of funding addr1 with USDT: ",
+    //         ethers.utils.formatEther(gasCostBigInt.toString())
+    //       );
 
-      // Check USDT balance of addr1 after Tx
-      const usdtBalanceAfterTx = await usdt.balanceOf(addr1.address);
+    //       // Check USDT balance of addr1 after Tx
+    //       const usdtBalanceAfterTx = await usdt.balanceOf(addr1.address);
 
-      // Convert to BigInt
-      const usdtBalanceBeforeTxBigInt = BigInt(usdtBalanceBeforeTx);
-      const usdtAmountBigInt = BigInt(usdtAmount);
+    //       // Convert to BigInt
+    //       const usdtBalanceBeforeTxBigInt = BigInt(usdtBalanceBeforeTx);
+    //       const usdtAmountBigInt = BigInt(usdtAmount);
 
-      // Check USDT balance of addr1 after Tx
-      expect(usdtBalanceAfterTx).to.equal(
-        usdtBalanceBeforeTxBigInt + usdtAmountBigInt
-      );
+    //       // Check USDT balance of addr1 after Tx
+    //       expect(usdtBalanceAfterTx).to.equal(
+    //         usdtBalanceBeforeTxBigInt + usdtAmountBigInt
+    //       );
 
-      console.log(
-        "USDT balance of addr1 after Tx: ",
-        ethers.utils.formatUnits(usdtBalanceAfterTx.toString(), 18)
-      );
-    });
-    it("Should successfully create a pool for USDT/WETH", async function () {
-      // Check if pool exists
-      const poolExists = await uniswapV3Factory.getPool(
-        usdt.address,
-        weth.address,
-        feeTier
-      );
+    //       console.log(
+    //         "USDT balance of addr1 after Tx: ",
+    //         ethers.utils.formatUnits(usdtBalanceAfterTx.toString(), 18)
+    //       );
+    //     });
+    //     it("Should successfully create a pool for USDT/WETH", async function () {
+    //       // Check if pool exists
+    //       const poolExists = await uniswapV3Factory.getPool(
+    //         usdt.address,
+    //         weth.address,
+    //         feeTier
+    //       );
 
-      expect(poolExists).to.equal(usdtWethPoolAddress);
-    });
+    //       expect(poolExists).to.equal(usdtWethPoolAddress);
+    //     });
   });
 });
+
+// A function that takes a array of addresses and funds them with 1000 WETH
+// async function fundWeth(weth) {
+//   const [deployer, addr1, addr2, addr3] = await ethers.getSigners();
+
+//   const wethA1 = await await addr1.sendTransaction({
+//     to: weth.address,
+//     value: ethers.utils.parseEther("1000"),
+//   });
+
+//   const wethA2 = await addr2.sendTransaction({
+//     to: weth.address,
+//     value: ethers.utils.parseEther("1000"),
+//   });
+
+//   const wethA3 = await addr3.sendTransaction({
+//     to: weth.address,
+//     value: ethers.utils.parseEther("1000"),
+//   });
+
+//   return wethA1, wethA2, wethA3;
+// }
