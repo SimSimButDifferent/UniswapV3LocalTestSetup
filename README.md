@@ -21,9 +21,9 @@ addr2 WETH Balance: 1000.0
 addr3 WETH Balance: 1000.0
 
 Addresses succesfully funded with USDT!
-addr1 USDT Balance: 0.00001
-addr2 USDT Balance: 0.00001
-addr3 USDT Balance: 0.00001
+addr1 USDT Balance: 10000000.0
+addr2 USDT Balance: 10000000.0
+addr3 USDT Balance: 10000000.0
       ✔ Should have funded addresses with USDT and WETH
 ```
 

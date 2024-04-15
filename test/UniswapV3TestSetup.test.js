@@ -127,13 +127,13 @@ describe("UniswapV3TestSetup", function () {
       console.log(" ");
       console.log("Addresses succesfully funded with USDT!");
       console.log(
-        `addr1 USDT Balance: ${ethers.utils.formatUnits(usdtBalanceA1)}`
+        `addr1 USDT Balance: ${ethers.utils.formatUnits(usdtBalanceA1, 6)}`
       );
       console.log(
-        `addr2 USDT Balance: ${ethers.utils.formatUnits(usdtBalanceA2)}`
+        `addr2 USDT Balance: ${ethers.utils.formatUnits(usdtBalanceA2, 6)}`
       );
       console.log(
-        `addr3 USDT Balance: ${ethers.utils.formatUnits(usdtBalanceA3)}`
+        `addr3 USDT Balance: ${ethers.utils.formatUnits(usdtBalanceA3, 6)}`
       );
     });
   });
