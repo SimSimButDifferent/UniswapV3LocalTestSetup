@@ -2,7 +2,7 @@
 
 This project aims to be a boilerplate for all you need to create complex test cases using hardhat.
 
-Deploys all neccesary contracts and has defined json files to put ERC20 token artifacts. With several addresses with large balances of various different ERC20 tokens.
+Deploys all neccesary contracts, with several addresses with large balances of various different ERC20 tokens.
 
 Boilerplate is loaded with WETH and USDT.
 
