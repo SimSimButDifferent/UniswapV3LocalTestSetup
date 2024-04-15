@@ -18,7 +18,7 @@ async function deployWeth() {
 
   await weth.deployed();
 
-  console.log(`WETH deployed to ${weth.address}`);
+  // console.log(`WETH deployed to ${weth.address}`);
 
   return weth;
 }
@@ -36,7 +36,7 @@ async function deployUniswapV3Factory() {
 
   await uniswapV3Factory.deployed();
 
-  console.log(`Uniswap V3 Factory deployed to ${uniswapV3Factory.address}`);
+  // console.log(`Uniswap V3 Factory deployed to ${uniswapV3Factory.address}`);
 
   return uniswapV3Factory;
 }
@@ -54,7 +54,7 @@ async function deployUniswapV3Router(uniswapV3Factory, weth) {
 
   await uniswapV3Router.deployed();
 
-  console.log(`Uniswap V3 Router deployed to ${uniswapV3Router.address}`);
+  // console.log(`Uniswap V3 Router deployed to ${uniswapV3Router.address}`);
 
   return uniswapV3Router;
 }
@@ -68,7 +68,7 @@ async function deployUsdt() {
 
   await usdt.deployed();
 
-  console.log(`USDT deployed to ${usdt.address}`);
+  // console.log(`USDT deployed to ${usdt.address}`);
 
   return usdt;
 }
