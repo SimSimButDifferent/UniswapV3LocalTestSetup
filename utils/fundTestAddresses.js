@@ -6,7 +6,12 @@ async function fundTestAddresses(weth, usdt) {
 async function fundWeth(weth) {
   const [deployer, addr1, addr2, addr3] = await ethers.getSigners();
 
-  const wethA1 = await await addr1.sendTransaction({
+  const wethD = await deployer.sendTransaction({
+    to: weth.address,
+    value: ethers.utils.parseEther("300000"),
+  });
+
+  const wethA1 = await addr1.sendTransaction({
     to: weth.address,
     value: ethers.utils.parseEther("1000"),
   });
@@ -21,11 +26,16 @@ async function fundWeth(weth) {
     value: ethers.utils.parseEther("1000"),
   });
 
-  return wethA1, wethA2, wethA3;
+  return wethD, wethA1, wethA2, wethA3;
 }
 
 async function fundUsdt(usdt) {
   const [deployer, addr1, addr2, addr3] = await ethers.getSigners();
+
+  const usdtD = await usdt.mint(
+    deployer.address,
+    ethers.utils.parseUnits("1000000000", 6)
+  );
 
   const usdtA1 = await usdt.mint(
     addr1.address,
@@ -40,7 +50,7 @@ async function fundUsdt(usdt) {
     ethers.utils.parseUnits("10000000", 6)
   );
 
-  return usdtA1, usdtA2, usdtA3;
+  return usdtD, usdtA1, usdtA2, usdtA3;
 }
 
 module.exports = { fundTestAddresses };
