@@ -2,7 +2,10 @@ const { helpers } = require("@nomicfoundation/hardhat-network-helpers");
 require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
-//require("@uniswapsd");
+const { Contract } = require("ethers");
+const { Token } = require("@uniswap/sdk-core");
+const { Pool, Position, nearestUsableTick } = require("@uniswap/v3-sdk");
+
 const {
   deployWeth,
   deployUniswapV3Factory,
@@ -14,6 +17,12 @@ const {
 } = require("../utils/deployV3Contracts");
 const { fundTestAddresses } = require("../utils/fundTestAddresses");
 const { setBalance } = require("@nomicfoundation/hardhat-network-helpers");
+const { encodePriceSqrt, getPoolData } = require("../utils/Utilities");
+
+const artifacts = {
+  UniswapV3Pool: require("@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json"),
+  UniswapV3PositionManager: require("@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json"),
+};
 
 describe("UniswapV3TestSetup", function () {
   let deployer,
@@ -26,26 +35,31 @@ describe("UniswapV3TestSetup", function () {
     ethAmount,
     usdtAmount,
     wethAmount,
+    wethPrice,
     deployerUsdtAmount,
     deployerWethAmount,
     uniswapV3Factory,
     uniswapV3Router,
     usdtWethPool,
+    usdtWethPoolContract,
     usdtWethPoolAddress,
     uniswapV3NFTDescriptor,
-    nftDescriptorAddress,
     uniswapV3NonFungiblePositionManager,
     uniswapV3NonFungibleTokenPositionDescriptor,
+    poolData,
     txReceipt,
     gasUsed,
     gasCost;
 
   before(async function () {
     [deployer, addr1, addr2, addr3] = await ethers.getSigners();
+    provider = deployer.provider;
 
     await setBalance(deployer.address, ethers.utils.parseEther("500000"));
 
     feeTier = 3000;
+
+    wethPrice = 3000;
 
     deployerUsdtAmount = ethers.utils.parseUnits("1000000000", 6);
 
@@ -89,20 +103,24 @@ describe("UniswapV3TestSetup", function () {
         uniswapV3NonFungibleTokenPositionDescriptor.address
       );
 
-    // Deploy USDT Contract
+    const uniswapV3NonFungiblePositionManagerAddress =
+      uniswapV3NonFungiblePositionManager.address;
 
+    // Deploy USDT Contract
     usdt = await deployUsdt();
 
     // Fund addresses with WETH and USDT
     await fundTestAddresses(weth, usdt);
 
     // Deploy usdt/weth pool
-
-    usdtWethPool = await uniswapV3Factory.createPool(
-      usdt.address,
-      weth.address,
-      feeTier
-    );
+    usdtWethPool =
+      await uniswapV3NonFungiblePositionManager.createAndInitializePoolIfNecessary(
+        usdt.address,
+        weth.address,
+        feeTier,
+        encodePriceSqrt(wethPrice, 1),
+        { gasLimit: 5000000 }
+      );
 
     await usdtWethPool.wait();
 
@@ -112,36 +130,73 @@ describe("UniswapV3TestSetup", function () {
       feeTier
     );
 
-    // // Approve the router to spend USDT and WETH
-    // await usdt.approve(uniswapV3Router.address, usdtAmount);
-    // await weth.approve(uniswapV3Router.address, wethAmount);
+    // Get pool data
+    usdtWethPoolContract = new Contract(
+      usdtWethPoolAddress,
+      artifacts.UniswapV3Pool.abi,
+      deployer
+    );
 
-    // // Prepare the parameters for minting liquidity
-    // const params = {
-    //   token0: usdt.address,
-    //   token1: weth.address,
-    //   fee: feeTier, // The fee tier of the pool
-    //   tickLower: -887272, // The lower tick of the price range
-    //   tickUpper: 887272, // The upper tick of the price range
-    //   amount0Desired: usdtAmount, // The desired amount of token0 to add
-    //   amount1Desired: wethAmount, // The desired amount of token1 to add
-    //   amount0Min: 0, // The minimum amount of token0 to add
-    //   amount1Min: 0, // The minimum amount of token1 to add
-    //   recipient: deployer.address, // The address that will receive the liquidity tokens
-    //   deadline: Date.now() + 1000, // The deadline for the transaction
-    // };
+    poolData = await getPoolData(usdtWethPoolContract);
 
-    // // Mint liquidity
-    // await usdtWethPool.addLiquidity(params);
+    // Create token + pool objects
+    const WethToken = new Token(1, weth.address, 18, "WETH", "Wrapped Ether");
+    const UsdtToken = new Token(1, usdt.address, 6, "USDT", "Tether USD");
 
-    // // console.log amounts of WETH and USDT in the pool
-    // const poolAmounts = await uniswapV3Router.getPoolAmounts(
-    //   usdt.address,
-    //   weth.address,
-    //   feeTier
+    const pool = new Pool(
+      WethToken,
+      UsdtToken,
+      poolData.fee,
+      poolData.sqrtPriceX96.toString(),
+      poolData.liquidity.toString(),
+      poolData.tick
+    );
+
+    // Create position object
+    const position = new Position({
+      pool: pool,
+      liquidity: ethers.utils.parseEther("3000"),
+      tickLower:
+        nearestUsableTick(poolData.tick, poolData.tickSpacing) -
+        poolData.tickSpacing * 2,
+      tickUpper:
+        nearestUsableTick(poolData.tick, poolData.tickSpacing) +
+        poolData.tickSpacing * 2,
+    });
+
+    // Outputs amount of each token required to mint position. Enter each into params.
+    const { amount0: amount0Desired, amount1: amount1Desired } =
+      position.mintAmounts;
+
+    // Create params object for minting position
+    params = {
+      token0: weth.address,
+      token1: usdt.address,
+      fee: poolData.fee,
+      tickLower:
+        nearestUsableTick(poolData.tick, poolData.tickSpacing) -
+        poolData.tickSpacing * 2,
+      tickUpper:
+        nearestUsableTick(poolData.tick, poolData.tickSpacing) +
+        poolData.tickSpacing * 2,
+      amount0Desired: amount0Desired.toString(),
+      amount1Desired: amount1Desired.toString(),
+      amount0Min: 0,
+      amount1Min: 0,
+      recipient: deployer.address,
+      deadline: Math.floor(Date.now() / 1000) + 60 * 10,
+    };
+
+    // const nonfungiblePositionManager = new Contract(
+    //   uniswapV3NonFungiblePositionManagerAddress,
+    //   artifacts.UniswapV3PositionManager.abi,
+    //   deployer
     // );
 
-    // console.log(`Pool Amounts: ${poolAmounts[0]}, ${poolAmounts[1]}`);
+    // const tx = await nonfungiblePositionManager.mint(params, {
+    //   gasLimit: "1000000",
+    // });
+    // const receipt = await tx.wait();
   });
 
   describe("Test contract deployment and setup", function () {

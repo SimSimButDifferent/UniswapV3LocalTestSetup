@@ -8,7 +8,7 @@ const artifacts = {
   WETH9: require("@uniswap/hardhat-v3-deploy/src/util/WETH9.json"),
 };
 
-const { linkLibraries } = require("./linkLibraries");
+const { linkLibraries } = require("./Utilities");
 
 async function deployWeth() {
   const [deployer] = await ethers.getSigners();

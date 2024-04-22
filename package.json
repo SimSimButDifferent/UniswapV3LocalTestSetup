@@ -25,7 +25,10 @@
   },
   "dependencies": {
     "@uniswap/hardhat-v3-deploy": "^0.1.1",
+    "@uniswap/sdk-core": "^4.2.0",
     "@uniswap/v3-core": "^1.0.1",
-    "@uniswap/v3-periphery": "1.2.1"
+    "@uniswap/v3-periphery": "1.2.1",
+    "@uniswap/v3-sdk": "^3.9.0",
+    "ethereum-waffle": "^4.0.10"
   }
 }
