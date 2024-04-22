@@ -86,7 +86,10 @@ async function deployUniswapV3NFTDescriptor() {
 }
 
 // Deploy UniswapV3 non-fungible Token position descriptor contract
-async function deployUniswapV3NonFungibleTokenPositionDescriptor(wethAddress) {
+async function deployUniswapV3NonFungibleTokenPositionDescriptor(
+  wethAddress,
+  nftDescriptorAddress
+) {
   const [deployer] = await ethers.getSigners();
 
   const linkedBytecode = linkLibraries(
@@ -104,7 +107,7 @@ async function deployUniswapV3NonFungibleTokenPositionDescriptor(wethAddress) {
       },
     },
     {
-      NFTDescriptor: nftDescriptor.address,
+      NFTDescriptor: nftDescriptorAddress,
     }
   );
 
@@ -120,9 +123,9 @@ async function deployUniswapV3NonFungibleTokenPositionDescriptor(wethAddress) {
 
   await uniswapV3NonFungibleTokenPositionDescriptor.deployed();
 
-  console.log(
-    `Uniswap V3 Non-Fungible Token Position Descriptor deployed to ${uniswapV3NonFungibleTokenPositionDescriptor.address}`
-  );
+  // console.log(
+  //   `Uniswap V3 Non-Fungible Token Position Descriptor deployed to ${uniswapV3NonFungibleTokenPositionDescriptor.address}`
+  // );
 
   return uniswapV3NonFungibleTokenPositionDescriptor;
 }

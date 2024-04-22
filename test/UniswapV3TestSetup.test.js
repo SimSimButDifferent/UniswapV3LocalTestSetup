@@ -33,13 +33,14 @@ describe("UniswapV3TestSetup", function () {
     usdtWethPool,
     usdtWethPoolAddress,
     uniswapV3NFTDescriptor,
+    nftDescriptorAddress,
     uniswapV3NonFungiblePositionManager,
     uniswapV3NonFungibleTokenPositionDescriptor,
     txReceipt,
     gasUsed,
     gasCost;
 
-  beforeEach(async function () {
+  before(async function () {
     [deployer, addr1, addr2, addr3] = await ethers.getSigners();
 
     await setBalance(deployer.address, ethers.utils.parseEther("500000"));
@@ -73,9 +74,17 @@ describe("UniswapV3TestSetup", function () {
     // Deploy NFT descriptor contract
     uniswapV3NFTDescriptor = await deployUniswapV3NFTDescriptor();
 
+    // console.log(
+    //   `Uniswap V3 NFT Descriptor deployed to ${uniswapV3NFTDescriptor.address}`
+    // );
+
     // Deploy Uniswap V3 Non-Fungible Token Position Descriptor Contract
+    // GET GPT TO BREAK DOWN THE LINK LIBRARIES SCRIPT. CROSS REF DIRECTLY WITH THE BYTECODE!!!!!!
     uniswapV3NonFungibleTokenPositionDescriptor =
-      deployUniswapV3NonFungibleTokenPositionDescriptor(weth.address);
+      await deployUniswapV3NonFungibleTokenPositionDescriptor(
+        weth.address,
+        uniswapV3NFTDescriptor.address
+      );
 
     // // Deploy Uniswap V3 Non-Fungible Position Manager Contract
     // uniswapV3NonFungiblePositionManager =
