@@ -74,25 +74,20 @@ describe("UniswapV3TestSetup", function () {
     // Deploy NFT descriptor contract
     uniswapV3NFTDescriptor = await deployUniswapV3NFTDescriptor();
 
-    // console.log(
-    //   `Uniswap V3 NFT Descriptor deployed to ${uniswapV3NFTDescriptor.address}`
-    // );
-
     // Deploy Uniswap V3 Non-Fungible Token Position Descriptor Contract
-    // GET GPT TO BREAK DOWN THE LINK LIBRARIES SCRIPT. CROSS REF DIRECTLY WITH THE BYTECODE!!!!!!
     uniswapV3NonFungibleTokenPositionDescriptor =
       await deployUniswapV3NonFungibleTokenPositionDescriptor(
         weth.address,
         uniswapV3NFTDescriptor.address
       );
 
-    // // Deploy Uniswap V3 Non-Fungible Position Manager Contract
-    // uniswapV3NonFungiblePositionManager =
-    //   await deployUniswapV3NonFungiblePositionManager(
-    //     uniswapV3Factory,
-    //     weth,
-    //     usdt
-    //   );
+    // Deploy Uniswap V3 Non-Fungible Position Manager Contract
+    uniswapV3NonFungiblePositionManager =
+      await deployUniswapV3NonFungiblePositionManager(
+        uniswapV3Factory.address,
+        weth.address,
+        uniswapV3NonFungibleTokenPositionDescriptor.address
+      );
 
     // Deploy USDT Contract
 
@@ -158,7 +153,7 @@ describe("UniswapV3TestSetup", function () {
       expect(uniswapV3NFTDescriptor.address).to.be.properAddress;
       expect(uniswapV3NonFungibleTokenPositionDescriptor.address).to.be
         .properAddress;
-      // expect(uniswapV3NonFungiblePositionManager.address).to.be.properAddress;
+      expect(uniswapV3NonFungiblePositionManager.address).to.be.properAddress;
 
       expect(
         await uniswapV3Factory.getPool(usdt.address, weth.address, feeTier)
@@ -173,9 +168,9 @@ describe("UniswapV3TestSetup", function () {
       console.log(
         `Uniswap V3 Non-Fungible Token Position Descriptor deployed to ${uniswapV3NonFungibleTokenPositionDescriptor.address}`
       );
-      // console.log(
-      //   `Uniswap V3 Non-Fungible Position Manager deployed to ${uniswapV3NonFungiblePositionManager.address}`
-      // );
+      console.log(
+        `Uniswap V3 Non-Fungible Position Manager deployed to ${uniswapV3NonFungiblePositionManager.address}`
+      );
       console.log(`USDT deployed to ${usdt.address}`);
       console.log(`USDT/WETH Pool created at address: ${usdtWethPoolAddress}`);
     });

@@ -131,7 +131,11 @@ async function deployUniswapV3NonFungibleTokenPositionDescriptor(
 }
 
 // Deploy UniswapV3 non-fungible position manager contract
-async function deployUniswapV3NonFungiblePositionManager(factory, weth, usdt) {
+async function deployUniswapV3NonFungiblePositionManager(
+  factory,
+  weth,
+  nftPositionDescriptorAddress
+) {
   const [deployer] = await ethers.getSigners();
 
   const UniswapV3NonFungiblePositionManager = new hre.ethers.ContractFactory(
@@ -141,7 +145,11 @@ async function deployUniswapV3NonFungiblePositionManager(factory, weth, usdt) {
   );
 
   const uniswapV3NonFungiblePositionManager =
-    await UniswapV3NonFungiblePositionManager.deploy(factory, weth, usdt);
+    await UniswapV3NonFungiblePositionManager.deploy(
+      factory,
+      weth,
+      nftPositionDescriptorAddress
+    );
 
   await uniswapV3NonFungiblePositionManager.deployed();
 
