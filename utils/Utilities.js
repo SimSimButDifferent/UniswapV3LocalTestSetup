@@ -54,4 +54,8 @@ async function getPoolData(poolContract) {
   };
 }
 
-module.exports = { encodePriceSqrt, linkLibraries, getPoolData };
+module.exports = {
+  encodePriceSqrt,
+  linkLibraries,
+  getPoolData,
+};

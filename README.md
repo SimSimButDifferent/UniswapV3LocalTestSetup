@@ -14,6 +14,9 @@ UniswapV3TestSetup
 WETH deployed to 0x54287AaB4D98eA51a3B1FBceE56dAf27E04a56A6
 Uniswap V3 Factory deployed to 0xE401FBb0d6828e9f25481efDc9dd18Da9E500983
 Uniswap V3 Router deployed to 0xb6aA91E8904d691a10372706e57aE1b390D26353
+Uniswap V3 NFT Descriptor deployed to 0x6fFa22292b86D678fF6621eEdC9B15e68dC44DcD
+Uniswap V3 Non-Fungible Token Position Descriptor deployed to 0x11632F9766Ee9d9317F95562a6bD529652ead78f
+Uniswap V3 Non-Fungible Position Manager deployed to 0x4f1F87d512650f32bf9949C4c5Ef37a3cc891C6D
 USDT deployed to 0x6fFa22292b86D678fF6621eEdC9B15e68dC44DcD
 USDT/WETH Pool created at address: 0x3f63B929cd59C8BD1DD622Eeb6Dd97b03cE1C2a7
 

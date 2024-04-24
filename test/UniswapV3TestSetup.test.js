@@ -2,9 +2,18 @@ const { helpers } = require("@nomicfoundation/hardhat-network-helpers");
 require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
-const { Contract } = require("ethers");
-const { Token } = require("@uniswap/sdk-core");
-const { Pool, Position, nearestUsableTick } = require("@uniswap/v3-sdk");
+const { Contract, BigNumber } = require("ethers");
+const { Token, Percent } = require("@uniswap/sdk-core");
+const {
+  Pool,
+  Position,
+  MintOptions,
+  NonfungiblePositionManager,
+  BigIntish,
+  nearestUsableTick,
+} = require("@uniswap/v3-sdk");
+require("@uniswap/smart-order-router");
+const JSBI = require("jsbi");
 
 const {
   deployWeth,
@@ -20,8 +29,10 @@ const { setBalance } = require("@nomicfoundation/hardhat-network-helpers");
 const { encodePriceSqrt, getPoolData } = require("../utils/Utilities");
 
 const artifacts = {
+  IUniswapPool: require("@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json"),
   UniswapV3Pool: require("@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json"),
   UniswapV3PositionManager: require("@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json"),
+  INonfungiblePositionManager: require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json"),
 };
 
 describe("UniswapV3TestSetup", function () {
@@ -53,7 +64,10 @@ describe("UniswapV3TestSetup", function () {
 
   before(async function () {
     [deployer, addr1, addr2, addr3] = await ethers.getSigners();
-    provider = deployer.provider;
+    const provider = ethers.provider;
+    // const provider = new ethers.providers.JsonRpcProvider(
+    //   "http://localhost:8545"
+    // );
 
     await setBalance(deployer.address, ethers.utils.parseEther("500000"));
 
@@ -106,11 +120,28 @@ describe("UniswapV3TestSetup", function () {
     const uniswapV3NonFungiblePositionManagerAddress =
       uniswapV3NonFungiblePositionManager.address;
 
+    // const nonfungiblePositionManager = new Contract(
+    //   uniswapV3NonFungiblePositionManagerAddress,
+    //   artifacts.UniswapV3PositionManager.abi,
+    //   deployer
+    // );
+
     // Deploy USDT Contract
     usdt = await deployUsdt();
 
     // Fund addresses with WETH and USDT
     await fundTestAddresses(weth, usdt);
+
+    // Approve position amounts for deployer
+    await weth.connect(deployer).approve(uniswapV3Router, deployerWethAmount);
+    await weth
+      .connect(deployer)
+      .approve(uniswapV3NonFungiblePositionManagerAddress, deployerWethAmount);
+
+    await usdt.connect(deployer).approve(uniswapV3Router, deployerUsdtAmount);
+    await usdt
+      .connect(deployer)
+      .approve(uniswapV3NonFungiblePositionManagerAddress, deployerUsdtAmount);
 
     // Deploy usdt/weth pool
     usdtWethPool =
@@ -131,16 +162,28 @@ describe("UniswapV3TestSetup", function () {
     );
 
     // Get pool data
-    usdtWethPoolContract = new Contract(
+    usdtWethPoolContract = new ethers.Contract(
       usdtWethPoolAddress,
-      artifacts.UniswapV3Pool.abi,
-      deployer
+      artifacts.IUniswapPool.abi,
+      provider
     );
+
+    const [liquidity, slot0] = await Promise.all([
+      usdtWethPoolContract.liquidity(),
+      usdtWethPoolContract.slot0(),
+    ]);
 
     poolData = await getPoolData(usdtWethPoolContract);
 
     // Create token + pool objects
-    const WethToken = new Token(1, weth.address, 18, "WETH", "Wrapped Ether");
+    const WethToken = new Token(
+      // 31337,
+      1,
+      weth.address,
+      18,
+      "WETH",
+      "Wrapped Ether"
+    );
     const UsdtToken = new Token(1, usdt.address, 6, "USDT", "Tether USD");
 
     const pool = new Pool(
@@ -152,51 +195,57 @@ describe("UniswapV3TestSetup", function () {
       poolData.tick
     );
 
+    // const upperTick = TickMath.MAX_TICK;
+    // const lowerTick = TickMath.MIN_TICK;
+
     // Create position object
     const position = new Position({
       pool: pool,
-      liquidity: ethers.utils.parseEther("3000"),
+      liquidity: ethers.utils.parseEther("300000"),
       tickLower:
         nearestUsableTick(poolData.tick, poolData.tickSpacing) -
         poolData.tickSpacing * 2,
       tickUpper:
         nearestUsableTick(poolData.tick, poolData.tickSpacing) +
         poolData.tickSpacing * 2,
+      amount0: ethers.utils.parseUnits("300000", 18),
+      amount1: ethers.utils.parseUnits("1000000000", 6),
+      // useFullPrecision: false,
     });
 
-    // Outputs amount of each token required to mint position. Enter each into params.
-    const { amount0: amount0Desired, amount1: amount1Desired } =
-      position.mintAmounts;
+    // // Outputs amount of each token required to mint position. Enter each into params.
+    // const { amount0: amount0Desired, amount1: amount1Desired } =
+    //   position.mintAmounts;
 
-    // Create params object for minting position
-    params = {
-      token0: weth.address,
-      token1: usdt.address,
-      fee: poolData.fee,
-      tickLower:
-        nearestUsableTick(poolData.tick, poolData.tickSpacing) -
-        poolData.tickSpacing * 2,
-      tickUpper:
-        nearestUsableTick(poolData.tick, poolData.tickSpacing) +
-        poolData.tickSpacing * 2,
-      amount0Desired: amount0Desired.toString(),
-      amount1Desired: amount1Desired.toString(),
-      amount0Min: 0,
-      amount1Min: 0,
+    const mintOptions = {
       recipient: deployer.address,
       deadline: Math.floor(Date.now() / 1000) + 60 * 10,
+      slippageTolerance: new Percent(50, 10000),
     };
 
-    // const nonfungiblePositionManager = new Contract(
-    //   uniswapV3NonFungiblePositionManagerAddress,
-    //   artifacts.UniswapV3PositionManager.abi,
-    //   deployer
-    // );
+    const { calldata, value } = NonfungiblePositionManager.addCallParameters(
+      position,
+      mintOptions
+    );
 
-    // const tx = await nonfungiblePositionManager.mint(params, {
-    //   gasLimit: "1000000",
-    // });
-    // const receipt = await tx.wait();
+    const MAX_FEE_PER_GAS = 100000000000;
+    const MAX_PRIORITY_FEE_PER_GAS = 20000000000;
+
+    const transaction = {
+      data: calldata,
+      to: uniswapV3NonFungiblePositionManagerAddress,
+      value: value,
+      from: deployer.address,
+      maxFeePerGas: MAX_FEE_PER_GAS,
+      maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
+      gasLimit: 5000000,
+    };
+
+    // CAN NOT MINT POSITION FOR SOME REASON. NEED TO DEBUG
+    // const MintTx = await deployer.sendTransaction(transaction);
+    // console.log(MintTx);
+    // const receipt = await MintTx.wait();
+    // console.log(receipt);
   });
 
   describe("Test contract deployment and setup", function () {
